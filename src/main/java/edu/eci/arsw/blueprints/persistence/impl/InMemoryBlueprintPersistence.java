@@ -10,13 +10,20 @@ import edu.eci.arsw.blueprints.model.Point;
 import edu.eci.arsw.blueprints.persistence.BlueprintNotFoundException;
 import edu.eci.arsw.blueprints.persistence.BlueprintPersistenceException;
 import edu.eci.arsw.blueprints.persistence.BlueprintsPersistence;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  * @author hcadavid
  */
+@Service("inMemoryBlueprintPersistence")
+@Primary
 public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
 
     private final Map<Tuple<String,String>,Blueprint> blueprints=new HashMap<>();
@@ -41,9 +48,37 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
 
     @Override
     public Blueprint getBlueprint(String author, String bprintname) throws BlueprintNotFoundException {
-        return blueprints.get(new Tuple<>(author, bprintname));
+        Blueprint blueprint = blueprints.get(new Tuple<>(author, bprintname));
+        if(blueprint == null){
+            throw new BlueprintNotFoundException("Blueprint Not Found.");
+        }
+        return blueprint;
     }
 
-    
-    
+    @Override
+    public Set<Blueprint> getBlueprintsByAuthor(String name) throws BlueprintNotFoundException {
+        Set<Blueprint> blueprintsByAuthor = new HashSet<>();
+
+        // Iterar sobre el mapa de blueprints para encontrar aquellos que coincidan con el autor
+        for (Map.Entry<Tuple<String, String>, Blueprint> entry : blueprints.entrySet()) {
+            Blueprint bp = entry.getValue();
+            if (bp.getAuthor().equals(name)) {
+                blueprintsByAuthor.add(bp);
+            }
+        }
+
+        // Si no se encuentran planos, lanzar excepción
+        if (blueprintsByAuthor.isEmpty()) {
+            throw new BlueprintNotFoundException("No blueprints found for author: " + name);
+        }
+
+        return blueprintsByAuthor;
+    }
+
+    @Override
+    public Set<Blueprint> getAllBlueprints() {
+        return (Set<Blueprint>) blueprints.values();
+    }
+
+
 }
